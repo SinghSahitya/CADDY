@@ -1,0 +1,19 @@
+{
+    "name": "cad-classification-backend",
+    "version": "1.0.0",
+    "description": "Backend for CAD model classification",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.17.1",
+        "multer": "^1.4.3",
+        "stl": "^1.1.1"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.15"
+    }
+}
