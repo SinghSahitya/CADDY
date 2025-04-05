@@ -70,7 +70,7 @@ def main():
     parser = argparse.ArgumentParser(description='Classify a single CAD file using trained PointNet++')
     parser.add_argument('--cad_file', type=str, required=True,
                        help='Path to the CAD file (.off format)')
-    parser.add_argument('--model_path', type=str, default=r'E:\Deep_Learning\CADDY\Web\backend\python_scripts\checkpoints\pointnet_best.pth',
+    parser.add_argument('--model_path', type=str, default=r'checkpoints\pointnet_best.pth',
                        help='Path to the trained model checkpoint')
     parser.add_argument('--num_points', type=int, default=1024,
                        help='Number of points to sample from the CAD model')
