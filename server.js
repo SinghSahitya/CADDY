@@ -197,6 +197,11 @@ app.post('/api/classify', upload.single('cadFile'), async (req, res) => {
   }
 });
 
+// Add this to your server.js file
+app.get('/', (req, res) => {
+  res.send('CAD Classification API is running. Use POST /api/classify to classify CAD files.');
+});
+
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
