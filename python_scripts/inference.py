@@ -70,7 +70,8 @@ def main():
     parser = argparse.ArgumentParser(description='Classify a single CAD file using trained PointNet++')
     parser.add_argument('--cad_file', type=str, required=True,
                        help='Path to the CAD file (.off format)')
-   parser.add_argument('--model_path', type=str, default=os.path.join(os.path.dirname(__file__), 'checkpoints', 'pointnet_best.pth'),help='Path to the trained model checkpoint')
+    parser.add_argument('--model_path', type=str, default=os.path.join(os.path.dirname(__file__), 'checkpoints', 'pointnet_best.pth'),
+                       help='Path to the trained model checkpoint')
     parser.add_argument('--num_points', type=int, default=1024,
                        help='Number of points to sample from the CAD model')
     parser.add_argument('--output_points', type=str, default='false',
@@ -78,7 +79,7 @@ def main():
     
     args = parser.parse_args()
     output_points = args.output_points.lower() == 'true'
-    
+
     # Check if the CAD file exists
     if not os.path.exists(args.cad_file):
         result = {"error": f"CAD file {args.cad_file} does not exist"}
