@@ -93,11 +93,14 @@ function convertStlToOff(stlFilePath) {
   });
 }
 
+// Enhanced STEP to OFF conversion function with better logging
 function convertStepToOff(stepFilePath) {
   return new Promise((resolve, reject) => {
     try {
       // Create output filename
       const offFilePath = stepFilePath.replace(/\.(step|stp)$/i, '.off');
+      
+      console.log(`Starting STEP to OFF conversion: ${stepFilePath} -> ${offFilePath}`);
       
       // Call the Python converter script
       const pythonProcess = spawn('python', [
@@ -106,27 +109,41 @@ function convertStepToOff(stepFilePath) {
         offFilePath
       ]);
       
+      let outputData = '';
       let errorData = '';
+      
+      pythonProcess.stdout.on('data', (data) => {
+        outputData += data.toString();
+        console.log(`Python Converter: ${data.toString().trim()}`);
+      });
       
       pythonProcess.stderr.on('data', (data) => {
         errorData += data.toString();
-        console.error(`Python Error: ${data}`);
+        console.error(`Python Converter Error: ${data.toString().trim()}`);
       });
       
       pythonProcess.on('close', (code) => {
         if (code !== 0) {
-          reject(new Error(`STEP to OFF conversion failed: ${errorData}`));
+          console.error(`STEP conversion failed with code ${code}`);
+          reject(new Error(`STEP to OFF conversion failed: ${errorData || outputData}`));
           return;
         }
         
+        // Verify the OFF file was created
+        if (!fs.existsSync(offFilePath)) {
+          reject(new Error('STEP to OFF conversion failed: Output file was not created'));
+          return;
+        }
+        
+        console.log(`STEP to OFF conversion completed successfully: ${offFilePath}`);
         resolve(offFilePath);
       });
     } catch (error) {
+      console.error('Error in convertStepToOff:', error);
       reject(error);
     }
   });
 }
-
 
 const fileFilter = (req, file, cb) => {
   const fileName = file.originalname.toLowerCase();
@@ -143,7 +160,6 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter
 });
-
 app.post('/api/classify', upload.single('cadFile'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No CAD file uploaded' });
@@ -208,7 +224,7 @@ app.post('/api/classify', upload.single('cadFile'), async (req, res) => {
       try {
         // Parse the JSON output from Python
         const results = JSON.parse(outputData);
-        console.log(results);
+        console.log(`Classification results: ${results.predictedClass} (confidence: ${results.confidence}%)`);
         res.json(results);
       } catch (error) {
         console.error('Error parsing Python output:', error);
