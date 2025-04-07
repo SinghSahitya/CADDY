@@ -93,23 +93,57 @@ function convertStlToOff(stlFilePath) {
   });
 }
 
-// File filter to only accept .off files
-// File filter to accept both .off and .stl files
+function convertStepToOff(stepFilePath) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create output filename
+      const offFilePath = stepFilePath.replace(/\.(step|stp)$/i, '.off');
+      
+      // Call the Python converter script
+      const pythonProcess = spawn('python', [
+        path.join(__dirname, 'python_scripts/step_to_off.py'),
+        stepFilePath,
+        offFilePath
+      ]);
+      
+      let errorData = '';
+      
+      pythonProcess.stderr.on('data', (data) => {
+        errorData += data.toString();
+        console.error(`Python Error: ${data}`);
+      });
+      
+      pythonProcess.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`STEP to OFF conversion failed: ${errorData}`));
+          return;
+        }
+        
+        resolve(offFilePath);
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+
 const fileFilter = (req, file, cb) => {
   const fileName = file.originalname.toLowerCase();
-  if (fileName.endsWith('.off') || fileName.endsWith('.stl')) {
+  if (fileName.endsWith('.off') || fileName.endsWith('.stl') || 
+      fileName.endsWith('.step') || fileName.endsWith('.stp')) {
     cb(null, true);
   } else {
-    cb(new Error('Only .OFF and .STL files are allowed'), false);
+    cb(new Error('Only .OFF, .STL, and .STEP files are allowed'), false);
   }
 };
+
 
 const upload = multer({ 
   storage: storage,
   fileFilter: fileFilter
 });
 
-// Endpoint to classify a CAD file
 app.post('/api/classify', upload.single('cadFile'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No CAD file uploaded' });
@@ -120,10 +154,14 @@ app.post('/api/classify', upload.single('cadFile'), async (req, res) => {
   let convertedFile = null;
   
   try {
-    // Check if file is STL and convert if needed
+    // Check file type and convert if needed
     if (originalFilename.endsWith('.stl')) {
       console.log(`Converting STL file to OFF format: ${filePath}`);
       filePath = await convertStlToOff(filePath);
+      convertedFile = filePath; // Track converted file for cleanup
+    } else if (originalFilename.endsWith('.step') || originalFilename.endsWith('.stp')) {
+      console.log(`Converting STEP file to OFF format: ${filePath}`);
+      filePath = await convertStepToOff(filePath);
       convertedFile = filePath; // Track converted file for cleanup
     }
     
